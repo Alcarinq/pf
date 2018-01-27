@@ -8,6 +8,7 @@ open Microsoft.FSharp.Reflection
 open System.Runtime.InteropServices
 
 open Database
+open Login
 
 module Main = 
     [<DllImport("kernel32.dll")>] extern bool FreeConsole()
@@ -23,12 +24,6 @@ module Main =
           row.[fld.Name] <- fld.GetValue(itm)
         dataTable.Rows.Add(row)
       dataTable
-
-    let dataTableToRecords (table:DataGridViewRowCollection) : 'T list =
-      //[ for row in table.Rows ->
-      //    let values = [| for fld in fields -> row.[fld.Name] |]
-      //    FSharpValue.MakeRecord(typeof<'T>, values) :?> 'T ]
-      Database.myTest
 
     let label =
         let temp = new Label()
@@ -51,10 +46,18 @@ module Main =
         do temp.Size <- new Size(100,25)
         temp
 
+    let buttonRemove =
+        let temp = new Button()
+        do temp.Text <- "Usuń wiersz"
+        do temp.Location <- new Point(205,50)
+        do temp.Size <- new Size(100,25)
+        temp
+
     let buttonReload =
         let temp = new Button()
         do temp.Text <- "Przeładuj"
         do temp.Location <- new Point(25,50)
+        do temp.Size <- new Size(80,25)
         temp
 
     let mainForm =
@@ -62,51 +65,59 @@ module Main =
         do temp.ClientSize <- new Size(800, 600)
         do temp.Controls.Add(label)
         do temp.Controls.Add(buttonShow)
-        do temp.Text <- "PF projekt"
+        do temp.Text <- "Magazyn sprzętu narciarskiego"
+        do temp.StartPosition <- FormStartPosition.CenterScreen
         temp
 
     let dataGrid =
         let temp = new DataGridView()
-        //do temp.Dock <- DockStyle.Fill
         do temp.Location <- new Point(20,100)
         do temp.Size <- new Size(760,480)
         do temp.AutoSizeColumnsMode <- DataGridViewAutoSizeColumnsMode.AllCells
         do temp.SelectionMode <- DataGridViewSelectionMode.FullRowSelect
         do temp.MultiSelect <- false
-        // do temp.DataError += new DataGridViewDataErrorEventHandler
-        // do temp.DataSource <- recordsToDataTable(Database.myTest)
         temp
 
     dataGrid.DataError.Add(fun event ->
         MessageBox.Show("Proszę użyć poprawnego typu dla wartości w wybranej kolumnie.","Błąd") |> ignore 
     )
 
+    let reloadData () =
+        dataGrid.DataSource <- null
+        dataGrid.Rows.Clear |> ignore
+        Database.select () |> ignore
+        dataGrid.DataSource <- recordsToDataTable(Database.data)    
+
     buttonShow.Click.Add(fun _ ->
         mainForm.Controls.Remove(buttonShow)
         mainForm.Controls.Add(dataGrid)
         mainForm.Controls.Add(buttonReload)
         mainForm.Controls.Add(buttonSave)
-        dataGrid.Columns.["Id"].ReadOnly <- true )
+        mainForm.Controls.Add(buttonRemove)
+        reloadData ()
+        dataGrid.Columns.["Id"].ReadOnly <- true
+        )
 
     buttonReload.Click.Add(fun _ ->
-        Database.select |> ignore
-        dataGrid.DataSource <- recordsToDataTable(Database.myTest) )
+        reloadData ()
+        )
 
     buttonSave.Click.Add(fun _ ->
-        do Database.insert (dataGrid.SelectedRows.[0].Cells.[1].Value.ToString()) (dataGrid.SelectedRows.[0].Cells.[2].Value.ToString()|>int) |>ignore
-        do Database.select |> ignore
-        dataGrid.DataSource <- recordsToDataTable(Database.myTest)
+        Database.insert (dataGrid.SelectedRows.[0].Cells.[1].Value.ToString()) (dataGrid.SelectedRows.[0].Cells.[2].Value.ToString()|>int) |>ignore
+        reloadData ()
         )
+
+    buttonRemove.Click.Add(fun _ ->
+        Database.delete (dataGrid.SelectedRows.[0].Cells.[0].Value.ToString() |>int) |>ignore
+        reloadData ()
+        )
+
+
 
     [<EntryPoint>]
     [<STAThread>]
     let main argv =  
         //FreeConsole() |>ignore
-        Application.EnableVisualStyles()
-
-        //Database.insert "Narty" 50 
-        Database.select |> ignore
-        dataGrid.DataSource <- recordsToDataTable(Database.myTest)
-        
-        Application.Run(mainForm)
+        Application.EnableVisualStyles()       
+        Application.Run(Login.loginForm)
         0
