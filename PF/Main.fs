@@ -112,7 +112,17 @@ module Main =
         reloadData ()
         )
 
-
+    Login.buttonLogin.Click.Add(fun _ ->
+        Database.checkLogin Login.inputLogin.Text Login.inputPassword.Text
+        printf "Logged as: %s\n" (Database.userType)
+        if Database.userType = "admin" || Database.userType = "user" then
+            Login.loginForm.Hide()
+            mainForm.Text <- sprintf "%s. Zalogowano jako: %s" (mainForm.Text.ToString()) (Database.userType)
+            mainForm.Show()
+            
+        else
+            MessageBox.Show("Błędny login/hasło lub użytkownik nie istnieje w systemie.","Błąd") |> ignore
+        )    
 
     [<EntryPoint>]
     [<STAThread>]
@@ -120,5 +130,4 @@ module Main =
         //FreeConsole() |>ignore
         Application.EnableVisualStyles()       
         Application.Run(Login.loginForm)
-        //Application.Run(mainForm)
         0

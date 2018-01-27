@@ -5,7 +5,7 @@ module Database =
     type Test = {Id: int; Name: string; Price: int}
 
     let mutable data = []
-    let mutable userType = ""
+    let mutable userType = "empty"
     let fillData (_id: int) (name: string) (price: int) list1=
         List.append list1 [{Test.Id=_id; Test.Name=name; Test.Price=price}]
 
@@ -110,7 +110,7 @@ module Database =
             else Failure 
               
     let checkLogin login password =
-        userType <- ""
+        userType <- "empty"
         try
             let cn = new SQLiteConnection(connectionString)
             cn.Open()
@@ -123,7 +123,5 @@ module Database =
                 userType <- result.["group"].ToString()
 
             cn.Close()
-
-            userType
         with 
-            | _ -> "empty"
+            | _ -> ()

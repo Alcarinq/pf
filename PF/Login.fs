@@ -25,6 +25,7 @@ module Login =
         let temp = new RichTextBox()
         do temp.Location <- new Point(80,20)
         do temp.Size <- new Size(150,25)
+        do temp.Multiline <- false
         temp
 
     let labelPassword =
@@ -39,11 +40,8 @@ module Login =
         let temp = new RichTextBox()
         do temp.Location <- new Point(80,55)
         do temp.Size <- new Size(150,25)
+        do temp.Multiline <- false
         temp
-
-    buttonLogin.Click.Add(fun _ ->
-        printf "%s" (Database.checkLogin inputLogin.Text inputPassword.Text)
-        )
 
     let loginForm =
         let temp = new Form()
@@ -56,4 +54,5 @@ module Login =
         do temp.Controls.Add(labelPassword)
         do temp.Controls.Add(inputPassword)
         temp
+
 
