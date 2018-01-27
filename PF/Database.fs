@@ -5,6 +5,7 @@ module Database =
     type Test = {Id: int; Name: string; Price: int}
 
     let mutable data = []
+    let mutable userType = ""
     let fillData (_id: int) (name: string) (price: int) list1=
         List.append list1 [{Test.Id=_id; Test.Name=name; Test.Price=price}]
 
@@ -55,7 +56,6 @@ module Database =
                     let sql = selectQuery
                     let cmd = new SQLiteCommand(sql, cn)
                     let result = cmd.ExecuteReader()
-        
                     
                     while result.Read() do
                         data <- fillData (result.["_id"].ToString() |>int) (result.["name"].ToString()) (result.["price"].ToString() |>int) data
@@ -110,21 +110,20 @@ module Database =
             else Failure 
               
     let checkLogin login password =
+        userType <- ""
         try
             let cn = new SQLiteConnection(connectionString)
             cn.Open()
 
             let sql = selectLoginQuery login password
             let cmd = new SQLiteCommand(sql, cn)
-            let result = cmd.ExecuteReader()
-        
+            let result = cmd.ExecuteReader()          
+
+            while result.Read() do
+                userType <- result.["group"].ToString()
+
             cn.Close()
 
-            let userType =
-                if result.HasRows then
-                    while result.Read() do
-                        if result.["group"].ToString() = "admin" then "admin" else "user" 
-                else ()
-            ""
+            userType
         with 
-            | _ -> ""
+            | _ -> "empty"

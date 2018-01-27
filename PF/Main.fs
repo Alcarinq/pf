@@ -120,4 +120,5 @@ module Main =
         //FreeConsole() |>ignore
         Application.EnableVisualStyles()       
         Application.Run(Login.loginForm)
+        //Application.Run(mainForm)
         0

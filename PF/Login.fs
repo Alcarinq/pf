@@ -42,9 +42,7 @@ module Login =
         temp
 
     buttonLogin.Click.Add(fun _ ->
-        let userType = Database.checkLogin inputLogin.Text inputPassword.Text
-        //printf "%s" userType
-        ()
+        printf "%s" (Database.checkLogin inputLogin.Text inputPassword.Text)
         )
 
     let loginForm =
