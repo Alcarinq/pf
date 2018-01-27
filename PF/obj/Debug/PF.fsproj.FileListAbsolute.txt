@@ -1,0 +1,13 @@
+E:\!Workspace\F#\PF\PF\bin\Debug\PF.exe.config
+E:\!Workspace\F#\PF\PF\bin\Debug\PF.XML
+E:\!Workspace\F#\PF\PF\bin\Debug\PF.exe
+E:\!Workspace\F#\PF\PF\bin\Debug\PF.pdb
+E:\!Workspace\F#\PF\PF\bin\Debug\FSharp.Core.dll
+E:\!Workspace\F#\PF\PF\bin\Debug\FSharp.Core.xml
+E:\!Workspace\F#\PF\PF\obj\Debug\PF.exe
+E:\!Workspace\F#\PF\PF\obj\Debug\PF.pdb
+E:\!Workspace\F#\PF\PF\bin\Debug\SQLite.Designer.dll
+E:\!Workspace\F#\PF\PF\bin\Debug\System.Data.SQLite.dll
+E:\!Workspace\F#\PF\PF\bin\Debug\EntityFramework.dll
+E:\!Workspace\F#\PF\PF\bin\Debug\SQLite.Designer.pdb
+E:\!Workspace\F#\PF\PF\bin\Debug\System.Data.SQLite.pdb
