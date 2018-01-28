@@ -59,7 +59,9 @@
   <ItemGroup>
     <None Include="App.config" />
     <Compile Include="Database.fs" />
+    <Compile Include="History.fs" />
     <Compile Include="Login.fs" />
+    <Compile Include="Rent.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
   <PropertyGroup>

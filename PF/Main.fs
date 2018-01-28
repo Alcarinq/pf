@@ -9,6 +9,8 @@ open System.Runtime.InteropServices
 
 open Database
 open Login
+open Rent
+open History
 
 module Main = 
     [<DllImport("kernel32.dll")>] extern bool FreeConsole()
@@ -78,6 +80,13 @@ module Main =
         do temp.Size <- new Size(buttonSizeX,buttonSizeY)
         temp
 
+    let buttonItemHistory =
+        let temp = new Button()
+        do temp.Text <- "Pokaż historię przedmiotu"
+        do temp.Location <- new Point(420,50)
+        do temp.Size <- new Size(buttonSizeX,buttonSizeY)
+        temp
+
     let mainForm =
         let temp = new Form()
         do temp.ClientSize <- new Size(800, 600)
@@ -109,6 +118,7 @@ module Main =
             mainForm.Controls.Add(buttonSave)
             mainForm.Controls.Add(buttonRemove)
             mainForm.Controls.Add(buttonRemoveRent)
+            mainForm.Controls.Add(buttonItemHistory)
         if Database.userType = "user" then
             mainForm.Controls.Add(buttonRent)
             dataGrid.Columns.["Rent"].Visible <- false
@@ -161,10 +171,29 @@ module Main =
 
     buttonRent.Click.Add(fun _ ->
         if dataGrid.SelectedRows.Count > 0 && dataGrid.SelectedRows.[0].Cells.[0].Value <> null then
-            let query = Database.Tquery(qType="rentItem", id=(dataGrid.SelectedRows.[0].Cells.[0].Value.ToString() |>int) )
-            Database.updateQuery query |> ignore 
-            reloadData ()
+            Rent.listDays.SelectedIndex <- 0
+            Database.selectGetPrice (dataGrid.SelectedRows.[0].Cells.[0].Value.ToString()|>int)|>ignore
+            Rent.labelPrice.Text <- sprintf @"Koszt wypożyczenia: %d" Database.itemPrice
+            Rent.RentForm.ShowDialog()|>ignore
         )
+
+    Rent.buttonRent.Click.Add(fun _ ->
+        if String.IsNullOrEmpty(Rent.inputName.Text.ToString()) then 
+            MessageBox.Show("Proszę podać nazwę.","Błąd") |> ignore
+        elif dataGrid.SelectedRows.Count > 0 && dataGrid.SelectedRows.[0].Cells.[0].Value <> null then
+            let query = Database.Tquery(qType="rentItemQuery", id=(dataGrid.SelectedRows.[0].Cells.[0].Value.ToString() |>int) )
+            Database.updateQuery query |> ignore 
+            let query2 = Database.Tquery(qType="insertRentalQuery", 
+                                         _idItem=(dataGrid.SelectedRows.[0].Cells.[0].Value.ToString() |>int),
+                                         _idRentUser=Database.userId,
+                                          userName=Rent.inputName.Text.ToString(),
+                                          rentDays=(Rent.listDays.SelectedItem.ToString()|>int),
+                                          endPrice=Rent.itemEndPrice 
+                                         )
+            Database.updateQuery query2 |> ignore 
+            reloadData ()
+            Rent.RentForm.Hide()
+    )
 
     let keyPressedLogin (e : KeyEventArgs) = 
         match e with
@@ -185,10 +214,20 @@ module Main =
             MessageBox.Show("Błędny login/hasło lub użytkownik nie istnieje w systemie.","Błąd") |> ignore
         )    
 
+    buttonItemHistory.Click.Add(fun _ ->
+        if dataGrid.SelectedRows.Count > 0 && dataGrid.SelectedRows.[0].Cells.[0].Value <> null then
+            History.historyGrid.DataSource <- null
+            History.historyGrid.Rows.Clear |> ignore
+            Database.selectHistory (dataGrid.SelectedRows.[0].Cells.[0].Value.ToString()|>int) |> ignore
+            History.historyGrid.DataSource <- recordsToDataTable(Database.historyData)
+            History.HistoryForm.ShowDialog()|>ignore
+        )
+
     [<EntryPoint>]
     [<STAThread>]
     let main argv =  
         //FreeConsole() |>ignore
+        Database.select () |>ignore
         Application.EnableVisualStyles()       
         Application.Run(Login.loginForm)
         0
