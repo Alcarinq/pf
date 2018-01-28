@@ -25,6 +25,9 @@ module Main =
         dataTable.Rows.Add(row)
       dataTable
 
+    let buttonSizeX = 100
+    let buttonSizeY = 45 
+
     let label =
         let temp = new Label()
         do temp.Size <- new System.Drawing.Size(100,100)
@@ -37,27 +40,42 @@ module Main =
         let temp = new Button()
         do temp.Text <- "Pokaż"
         do temp.Location <- new Point(25,50)
+        do temp.Size <- new Size(buttonSizeX,buttonSizeY)
         temp
     
     let buttonSave =
         let temp = new Button()
         do temp.Text <- "Zapisz wiersz"
-        do temp.Location <- new Point(105,50)
-        do temp.Size <- new Size(100,25)
+        do temp.Location <- new Point(120,50)
+        do temp.Size <- new Size(buttonSizeX,buttonSizeY)
         temp
 
     let buttonRemove =
         let temp = new Button()
         do temp.Text <- "Usuń wiersz"
-        do temp.Location <- new Point(205,50)
-        do temp.Size <- new Size(100,25)
+        do temp.Location <- new Point(220,50)
+        do temp.Size <- new Size(buttonSizeX,buttonSizeY)
         temp
 
     let buttonReload =
         let temp = new Button()
         do temp.Text <- "Przeładuj"
-        do temp.Location <- new Point(25,50)
-        do temp.Size <- new Size(80,25)
+        do temp.Location <- new Point(20,50)
+        do temp.Size <- new Size(buttonSizeX,buttonSizeY)
+        temp
+
+    let buttonRent =
+        let temp = new Button()
+        do temp.Text <- "Wypożycz"
+        do temp.Location <- new Point(120,50)
+        do temp.Size <- new Size(buttonSizeX,buttonSizeY)
+        temp
+
+    let buttonRemoveRent =
+        let temp = new Button()
+        do temp.Text <- "Usuń wypożyczenie"
+        do temp.Location <- new Point(320,50)
+        do temp.Size <- new Size(buttonSizeX,buttonSizeY)
         temp
 
     let mainForm =
@@ -86,16 +104,24 @@ module Main =
         dataGrid.DataSource <- null
         dataGrid.Rows.Clear |> ignore
         Database.select () |> ignore
-        dataGrid.DataSource <- recordsToDataTable(Database.data)    
+        dataGrid.DataSource <- recordsToDataTable(Database.data)
+        if Database.userType = "admin" then
+            mainForm.Controls.Add(buttonSave)
+            mainForm.Controls.Add(buttonRemove)
+            mainForm.Controls.Add(buttonRemoveRent)
+        if Database.userType = "user" then
+            mainForm.Controls.Add(buttonRent)
+            dataGrid.Columns.["Rent"].Visible <- false
+            dataGrid.Columns.["Name"].ReadOnly <- true
+            dataGrid.Columns.["Price"].ReadOnly <- true
+        dataGrid.Columns.["Id"].ReadOnly <- true
+        dataGrid.Columns.["Rent"].ReadOnly <- true            
 
     buttonShow.Click.Add(fun _ ->
         mainForm.Controls.Remove(buttonShow)
         mainForm.Controls.Add(dataGrid)
         mainForm.Controls.Add(buttonReload)
-        mainForm.Controls.Add(buttonSave)
-        mainForm.Controls.Add(buttonRemove)
         reloadData ()
-        dataGrid.Columns.["Id"].ReadOnly <- true
         )
 
     buttonReload.Click.Add(fun _ ->
@@ -103,15 +129,50 @@ module Main =
         )
 
     buttonSave.Click.Add(fun _ ->
-        Database.insert (dataGrid.SelectedRows.[0].Cells.[1].Value.ToString()) (dataGrid.SelectedRows.[0].Cells.[2].Value.ToString()|>int) |>ignore
-        reloadData ()
+        if dataGrid.SelectedRows.[0].Cells.[0].Value <> null then
+            let query =
+                if (String.IsNullOrEmpty(dataGrid.SelectedRows.[0].Cells.[0].Value.ToString())) then
+                    Database.Tquery(qType="insertItemQuery", name=(dataGrid.SelectedRows.[0].Cells.[1].Value.ToString()), price=(dataGrid.SelectedRows.[0].Cells.[2].Value.ToString()|>int) )
+                else
+                    Database.Tquery(qType="updateItemQuery", 
+                                    id=(dataGrid.SelectedRows.[0].Cells.[0].Value.ToString()|>int),
+                                    name=(dataGrid.SelectedRows.[0].Cells.[1].Value.ToString()), 
+                                    price=(dataGrid.SelectedRows.[0].Cells.[2].Value.ToString()|>int),
+                                    rent=Convert.ToInt32((dataGrid.SelectedRows.[0].Cells.[3].Value)) )
+                    
+                    
+            Database.updateQuery query |> ignore 
+            reloadData ()
         )
 
     buttonRemove.Click.Add(fun _ ->
-        Database.delete (dataGrid.SelectedRows.[0].Cells.[0].Value.ToString() |>int) |>ignore
-        reloadData ()
+        if dataGrid.SelectedRows.[0].Cells.[0].Value <> null then
+            let query = Database.Tquery(qType="deleteQuery", id=(dataGrid.SelectedRows.[0].Cells.[0].Value.ToString() |>int) )
+            Database.updateQuery query |> ignore 
+            reloadData ()
         )
 
+    buttonRemoveRent.Click.Add(fun _ ->
+        if dataGrid.SelectedRows.[0].Cells.[0].Value <> null then
+            let query = Database.Tquery(qType="removeRentQuery", id=(dataGrid.SelectedRows.[0].Cells.[0].Value.ToString() |>int) )
+            Database.updateQuery query |> ignore 
+            reloadData ()
+        )
+
+    buttonRent.Click.Add(fun _ ->
+        if dataGrid.SelectedRows.Count > 0 && dataGrid.SelectedRows.[0].Cells.[0].Value <> null then
+            let query = Database.Tquery(qType="rentItem", id=(dataGrid.SelectedRows.[0].Cells.[0].Value.ToString() |>int) )
+            Database.updateQuery query |> ignore 
+            reloadData ()
+        )
+
+    let keyPressedLogin (e : KeyEventArgs) = 
+        match e with
+        | e when e.KeyCode = Keys.Enter -> Login.buttonLogin.PerformClick()
+        | _  -> ()
+
+    Login.inputLogin.KeyDown.AddHandler(KeyEventHandler (fun _ e -> keyPressedLogin e ))
+    Login.inputPassword.KeyDown.AddHandler(KeyEventHandler (fun _ e -> keyPressedLogin e ))
     Login.buttonLogin.Click.Add(fun _ ->
         Database.checkLogin Login.inputLogin.Text Login.inputPassword.Text
         printf "Logged as: %s\n" (Database.userType)

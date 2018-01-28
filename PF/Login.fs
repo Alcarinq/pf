@@ -22,7 +22,7 @@ module Login =
         temp
 
     let inputLogin =
-        let temp = new RichTextBox()
+        let temp = new TextBox()
         do temp.Location <- new Point(80,20)
         do temp.Size <- new Size(150,25)
         do temp.Multiline <- false
@@ -37,10 +37,11 @@ module Login =
         temp
 
     let inputPassword =
-        let temp = new RichTextBox()
+        let temp = new TextBox()
         do temp.Location <- new Point(80,55)
         do temp.Size <- new Size(150,25)
         do temp.Multiline <- false
+        do temp.PasswordChar <- '*'
         temp
 
     let loginForm =
@@ -53,6 +54,5 @@ module Login =
         do temp.Controls.Add(inputLogin)
         do temp.Controls.Add(labelPassword)
         do temp.Controls.Add(inputPassword)
+        do temp.ActiveControl <- inputLogin
         temp
-
-
